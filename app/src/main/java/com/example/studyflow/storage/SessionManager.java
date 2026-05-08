@@ -21,8 +21,18 @@ public class SessionManager {
                 .apply();
     }
 
+    public void saveAuthToken(String token) {
+        preferences.edit()
+                .putString(Constants.KEY_TOKEN, token)
+                .apply();
+    }
+
     public String getToken() {
         return preferences.getString(Constants.KEY_TOKEN, null);
+    }
+
+    public String getAuthToken() {
+        return getToken();
     }
 
     public String getUserEmail() {
@@ -34,7 +44,8 @@ public class SessionManager {
     }
 
     public boolean isLoggedIn() {
-        return getToken() != null && !getToken().isEmpty();
+        String token = getToken();
+        return token != null && !token.isEmpty();
     }
 
     public void clearSession() {

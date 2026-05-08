@@ -2,9 +2,7 @@ package com.example.studyflow.fragments;
 
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -13,27 +11,23 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.studyflow.R;
+import com.example.studyflow.activities.MainActivity;
+import com.example.studyflow.viewmodel.SubjectViewModel;
 
 public class CreateSubjectFragment extends Fragment {
 
     private EditText editSubjectName;
     private EditText editGoal;
-    private EditText editFrequency;
-    private EditText editDuration;
     private Switch switchReminder;
     private Button buttonCreateSubject;
 
-    public CreateSubjectFragment() {
-    }
+    private SubjectViewModel viewModel;
 
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_create_subject, container, false);
+    public CreateSubjectFragment() {
+        super(R.layout.fragment_create_subject);
     }
 
     @Override
@@ -42,37 +36,45 @@ public class CreateSubjectFragment extends Fragment {
 
         editSubjectName = view.findViewById(R.id.editSubjectName);
         editGoal = view.findViewById(R.id.editGoal);
-        editFrequency = view.findViewById(R.id.editFrequency);
-        editDuration = view.findViewById(R.id.editDuration);
         switchReminder = view.findViewById(R.id.switchReminder);
         buttonCreateSubject = view.findViewById(R.id.buttonCreateSubject);
+
+        viewModel = new ViewModelProvider(requireActivity()).get(SubjectViewModel.class);
+
+        observeViewModel();
 
         buttonCreateSubject.setOnClickListener(v -> createSubject());
     }
 
-    private void createSubject() {
-        String subjectName = editSubjectName.getText().toString().trim();
-        String goal = editGoal.getText().toString().trim();
-        String frequency = editFrequency.getText().toString().trim();
-        String duration = editDuration.getText().toString().trim();
-        boolean reminderEnabled = switchReminder.isChecked();
+    private void observeViewModel() {
+        viewModel.getSubjectCreated().observe(getViewLifecycleOwner(), created -> {
+            if (created != null && created) {
+                Toast.makeText(requireContext(), "Subject created", Toast.LENGTH_SHORT).show();
+                viewModel.resetSubjectCreated();
+                ((MainActivity) requireActivity()).returnToSubjects();
+            }
+        });
 
-        if (TextUtils.isEmpty(subjectName)) {
+        viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
+            if (error != null && !error.isEmpty()) {
+                Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void createSubject() {
+        String title = editSubjectName.getText().toString().trim();
+        String description = editGoal.getText().toString().trim();
+
+        if (TextUtils.isEmpty(title)) {
             editSubjectName.setError("Enter subject name");
             editSubjectName.requestFocus();
             return;
         }
 
-        String message =
-                "Created:\n" +
-                        "Name: " + subjectName +
-                        "\nGoal: " + goal +
-                        "\nFrequency: " + frequency +
-                        "\nDuration: " + duration +
-                        "\nReminder: " + reminderEnabled;
+        buttonCreateSubject.setEnabled(false);
+        Toast.makeText(requireContext(), "Creating subject...", Toast.LENGTH_SHORT).show();
 
-        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
-
-        requireActivity().getSupportFragmentManager().popBackStack();
+        viewModel.createSubject(title, description);
     }
 }

@@ -181,13 +181,21 @@
             app:layout_constraintTop_toBottomOf="@id/cardNotes"
             app:layout_constraintStart_toStartOf="parent" />
 
+        <TextView
+            android:id="@+id/textSessionHistory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No sessions yet"
+            android:padding="12dp"
+            android:textSize="14sp"
+            tools:ignore="MissingConstraints" />
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerSessionHistory"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:nestedScrollingEnabled="false"
-            tools:listitem="@layout/item_session"
             app:layout_constraintTop_toBottomOf="@id/textHistoryTitle"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

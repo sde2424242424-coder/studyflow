@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Studyflow</string>
+
+    <string name="settings_title">Настройки</string>
+    <string name="settings_language">Язык</string>
+
+    <string name="language_english">Английский</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_korean">Корейский</string>
+</resources>

@@ -1,6 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_nav_graph"
+    app:startDestination="@id/subjectsFragment">
 
-</LinearLayout>
+    <fragment
+        android:id="@+id/subjectsFragment"
+        android:name="com.example.studyflow.fragments.SubjectsFragment"
+        android:label="Subjects">
+
+        <action
+            android:id="@+id/action_subjectsFragment_to_subjectDetailFragment"
+            app:destination="@id/subjectDetailFragment" />
+
+        <action
+            android:id="@+id/action_subjectsFragment_to_addSubjectFragment"
+            app:destination="@id/addSubjectFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/subjectDetailFragment"
+        android:name="com.example.studyflow.fragments.SubjectDetailFragment"
+        android:label="Subject Detail" />
+
+    <fragment
+        android:id="@+id/addSubjectFragment"
+        android:name="com.example.studyflow.fragments.AddSubjectFragment"
+        android:label="Add Subject" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.studyflow.fragments.SettingsFragment"
+        android:label="@string/settings_title" />
+
+</navigation>

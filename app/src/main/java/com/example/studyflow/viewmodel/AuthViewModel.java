@@ -6,10 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
-import com.example.studyflow.network.requests.LoginRequestDto;
-import com.example.studyflow.network.requests.RegisterRequestDto;
+import com.example.studyflow.models.LoginResult;
 import com.example.studyflow.network.responses.LoginResponseDto;
-import com.example.studyflow.network.responses.UserResponseDto;
 import com.example.studyflow.repository.AuthRepository;
 import com.example.studyflow.storage.SessionManager;
 
@@ -23,95 +21,78 @@ public class AuthViewModel extends AndroidViewModel {
     private final SessionManager sessionManager;
 
     public MutableLiveData<LoginResponseDto> authSuccess = new MutableLiveData<>();
-    public MutableLiveData<String> errorMessage = new MutableLiveData<>();
     public MutableLiveData<Boolean> authCheckSuccess = new MutableLiveData<>();
+    public MutableLiveData<String> errorMessage = new MutableLiveData<>();
+    public MutableLiveData<LoginResult> loginResult = new MutableLiveData<>();
 
     public AuthViewModel(@NonNull Application application) {
         super(application);
-        authRepository = new AuthRepository(application.getApplicationContext());
-        sessionManager = new SessionManager(application.getApplicationContext());
+        authRepository = new AuthRepository(application);
+        sessionManager = new SessionManager(application);
+    }
+
+    public MutableLiveData<LoginResult> getLoginResult() {
+        return loginResult;
     }
 
     public void login(String email, String password) {
-        LoginRequestDto requestDto = new LoginRequestDto(email, password);
-
-        authRepository.login(requestDto).enqueue(new Callback<LoginResponseDto>() {
+        authRepository.login(email, password).enqueue(new Callback<LoginResponseDto>() {
             @Override
-            public void onResponse(@NonNull Call<LoginResponseDto> call,
-                                   @NonNull Response<LoginResponseDto> response) {
+            public void onResponse(Call<LoginResponseDto> call, Response<LoginResponseDto> response) {
+
                 if (response.isSuccessful() && response.body() != null) {
                     LoginResponseDto body = response.body();
 
-                    if (body.getUser() != null) {
-                        sessionManager.saveAuthData(
-                                body.getToken(),
-                                body.getUser().getEmail(),
-                                body.getUser().getName()
-                        );
+                    if (body.getToken() != null && !body.getToken().isEmpty()) {
+                        sessionManager.saveAuthToken(response.body().getToken());
+
+                        authSuccess.postValue(body);
+                        loginResult.postValue(new LoginResult(true, "Успешный вход"));
+                    } else {
+                        loginResult.postValue(new LoginResult(false, "Сервер не вернул токен"));
                     }
 
-                    authSuccess.postValue(body);
+                } else if (response.code() == 401 || response.code() == 403) {
+                    loginResult.postValue(new LoginResult(false, "Неверный email или пароль"));
                 } else {
-                    errorMessage.postValue("Login failed");
+                    loginResult.postValue(new LoginResult(false, "Ошибка сервера: " + response.code()));
                 }
             }
 
             @Override
-            public void onFailure(@NonNull Call<LoginResponseDto> call, @NonNull Throwable t) {
-                errorMessage.postValue(t.getMessage());
+            public void onFailure(Call<LoginResponseDto> call, Throwable t) {
+                loginResult.postValue(new LoginResult(false, "Ошибка сети: " + t.getMessage()));
             }
         });
     }
 
     public void register(String name, String email, String password) {
-        RegisterRequestDto requestDto = new RegisterRequestDto(name, email, password);
-
-        authRepository.register(requestDto).enqueue(new Callback<LoginResponseDto>() {
+        authRepository.register(name, email, password).enqueue(new Callback<LoginResponseDto>() {
             @Override
-            public void onResponse(@NonNull Call<LoginResponseDto> call,
-                                   @NonNull Response<LoginResponseDto> response) {
+            public void onResponse(Call<LoginResponseDto> call, Response<LoginResponseDto> response) {
+
                 if (response.isSuccessful() && response.body() != null) {
                     LoginResponseDto body = response.body();
 
-                    if (body.getUser() != null) {
-                        sessionManager.saveAuthData(
-                                body.getToken(),
-                                body.getUser().getEmail(),
-                                body.getUser().getName()
-                        );
+                    if (body.getToken() != null && !body.getToken().isEmpty()) {
+                        sessionManager.saveAuthToken(body.getToken());
                     }
 
                     authSuccess.postValue(body);
+
                 } else {
-                    errorMessage.postValue("Registration failed");
+                    errorMessage.postValue("Ошибка регистрации. Код: " + response.code());
                 }
             }
 
             @Override
-            public void onFailure(@NonNull Call<LoginResponseDto> call, @NonNull Throwable t) {
-                errorMessage.postValue(t.getMessage());
+            public void onFailure(Call<LoginResponseDto> call, Throwable t) {
+                errorMessage.postValue("Ошибка сети: " + t.getMessage());
             }
         });
     }
 
     public void checkAuth() {
-        authRepository.getCurrentUser().enqueue(new Callback<UserResponseDto>() {
-            @Override
-            public void onResponse(@NonNull Call<UserResponseDto> call,
-                                   @NonNull Response<UserResponseDto> response) {
-                if (response.isSuccessful()) {
-                    authCheckSuccess.postValue(true);
-                } else {
-                    sessionManager.clearSession();
-                    authCheckSuccess.postValue(false);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<UserResponseDto> call, @NonNull Throwable t) {
-                sessionManager.clearSession();
-                authCheckSuccess.postValue(false);
-            }
-        });
+        authCheckSuccess.postValue(sessionManager.isLoggedIn());
     }
 }
