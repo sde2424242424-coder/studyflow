@@ -7,4 +7,6 @@
     <string name="language_english">English</string>
     <string name="language_russian">Russian</string>
     <string name="language_korean">Korean</string>
+
+    <string name="logout">Log out</string>
 </resources>

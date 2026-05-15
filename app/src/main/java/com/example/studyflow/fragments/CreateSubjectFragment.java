@@ -49,16 +49,21 @@ public class CreateSubjectFragment extends Fragment {
     private void observeViewModel() {
         viewModel.getSubjectCreated().observe(getViewLifecycleOwner(), created -> {
             if (created != null && created) {
-                Toast.makeText(requireContext(), "Subject created", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "Subject saved", Toast.LENGTH_SHORT).show();
                 viewModel.resetSubjectCreated();
                 ((MainActivity) requireActivity()).returnToSubjects();
             }
         });
 
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
-            if (error != null && !error.isEmpty()) {
+            if (error != null && !error.trim().isEmpty()) {
+                buttonCreateSubject.setEnabled(true);
                 Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
             }
+        });
+
+        viewModel.getLoading().observe(getViewLifecycleOwner(), isLoading -> {
+            buttonCreateSubject.setEnabled(!Boolean.TRUE.equals(isLoading));
         });
     }
 
@@ -73,7 +78,6 @@ public class CreateSubjectFragment extends Fragment {
         }
 
         buttonCreateSubject.setEnabled(false);
-        Toast.makeText(requireContext(), "Creating subject...", Toast.LENGTH_SHORT).show();
 
         viewModel.createSubject(title, description);
     }

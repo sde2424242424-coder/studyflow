@@ -10,6 +10,8 @@ import androidx.lifecycle.MutableLiveData;
 import com.example.studyflow.network.ApiClient;
 import com.example.studyflow.network.ApiService;
 import com.example.studyflow.network.responses.SessionResponseDto;
+import com.example.studyflow.repository.SessionRepository;
+import com.example.studyflow.storage.local.session.LocalStudySessionEntity;
 import com.example.studyflow.utils.AuthErrorHandler;
 
 import java.util.ArrayList;
@@ -25,12 +27,12 @@ import retrofit2.Response;
 public class SessionViewModel extends AndroidViewModel {
 
     private final ApiService apiService;
+    private final SessionRepository sessionRepository;
 
     private final MutableLiveData<List<SessionResponseDto>> sessionsLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
 
     private final Map<Long, List<SessionResponseDto>> sessionsCache = new HashMap<>();
-    private final HashSet<Long> loadedSubjectIds = new HashSet<>();
     private final HashSet<Long> loadingSubjectIds = new HashSet<>();
 
     private Long currentSubjectId = null;
@@ -38,6 +40,7 @@ public class SessionViewModel extends AndroidViewModel {
     public SessionViewModel(@NonNull Application application) {
         super(application);
         apiService = ApiClient.getApiService(application);
+        sessionRepository = new SessionRepository(application);
     }
 
     public LiveData<List<SessionResponseDto>> getSessionsLiveData() {
@@ -50,46 +53,48 @@ public class SessionViewModel extends AndroidViewModel {
 
     public void loadSessionsIfNeeded(Long subjectId) {
         if (subjectId == null) {
-            errorMessage.setValue("Subject id is empty");
+            errorMessage.postValue("Subject id is empty");
             return;
         }
 
         currentSubjectId = subjectId;
-
-        if (sessionsCache.containsKey(subjectId)) {
-            sessionsLiveData.setValue(sessionsCache.get(subjectId));
-            return;
-        }
-
-        if (loadedSubjectIds.contains(subjectId)) {
-            sessionsLiveData.setValue(new ArrayList<>());
-            return;
-        }
 
         if (loadingSubjectIds.contains(subjectId)) {
             return;
         }
 
-        loadSessionsFromServer(subjectId);
+        loadLocalSessionsThenServer(subjectId);
     }
 
     public void refreshSessions(Long subjectId) {
         if (subjectId == null) {
-            errorMessage.setValue("Subject id is empty");
+            errorMessage.postValue("Subject id is empty");
             return;
         }
 
         currentSubjectId = subjectId;
-
-        loadedSubjectIds.remove(subjectId);
         sessionsCache.remove(subjectId);
 
-        loadSessionsFromServer(subjectId);
+        loadLocalSessionsThenServer(subjectId);
+    }
+
+    private void loadLocalSessionsThenServer(Long subjectId) {
+        loadingSubjectIds.add(subjectId);
+
+        sessionRepository.getLocalSessionsBySubjectId(subjectId, localSessions -> {
+            List<SessionResponseDto> localDtos = convertLocalSessionsToDto(localSessions);
+
+            sessionsCache.put(subjectId, new ArrayList<>(localDtos));
+
+            if (subjectId.equals(currentSubjectId)) {
+                sessionsLiveData.postValue(localDtos);
+            }
+
+            loadSessionsFromServer(subjectId);
+        });
     }
 
     private void loadSessionsFromServer(Long subjectId) {
-        loadingSubjectIds.add(subjectId);
-
         apiService.getSessionsBySubject(subjectId).enqueue(new Callback<List<SessionResponseDto>>() {
             @Override
             public void onResponse(
@@ -102,10 +107,9 @@ public class SessionViewModel extends AndroidViewModel {
                     List<SessionResponseDto> result = response.body();
 
                     sessionsCache.put(subjectId, new ArrayList<>(result));
-                    loadedSubjectIds.add(subjectId);
 
                     if (subjectId.equals(currentSubjectId)) {
-                        sessionsLiveData.setValue(result);
+                        sessionsLiveData.postValue(result);
                     }
 
                     return;
@@ -116,7 +120,7 @@ public class SessionViewModel extends AndroidViewModel {
                     return;
                 }
 
-                errorMessage.setValue("Failed to load session history");
+                errorMessage.postValue("Offline mode. Local session history is shown.");
             }
 
             @Override
@@ -125,7 +129,53 @@ public class SessionViewModel extends AndroidViewModel {
                     @NonNull Throwable t
             ) {
                 loadingSubjectIds.remove(subjectId);
-                errorMessage.setValue(t.getMessage());
+                errorMessage.postValue("Offline mode. Local session history is shown.");
+            }
+        });
+    }
+
+    private List<SessionResponseDto> convertLocalSessionsToDto(
+            List<LocalStudySessionEntity> localSessions
+    ) {
+        List<SessionResponseDto> result = new ArrayList<>();
+
+        if (localSessions == null) {
+            return result;
+        }
+
+        for (LocalStudySessionEntity entity : localSessions) {
+            SessionResponseDto dto = new SessionResponseDto();
+
+            if (entity.serverId != null) {
+                dto.setId(entity.serverId);
+            } else {
+                dto.setId(-entity.localId);
+            }
+
+            dto.setSubjectId(entity.subjectServerId);
+            dto.setDurationSeconds(entity.durationSeconds);
+            dto.setPlannedSeconds(entity.plannedSeconds);
+            dto.setProductivity(entity.productivityLevel);
+            dto.setFatigue(entity.fatigue);
+            dto.setNotes(entity.notes);
+            dto.setStudyPlace(entity.studyPlace);
+            dto.setStudyEnvironment(entity.studyEnvironment);
+            dto.setDifficulty(entity.difficultyLevel);
+            dto.setNeedReview(entity.needReview);
+            dto.setFatigueLevel(entity.fatigueLevel);
+            dto.setUnderstanding(entity.understandingLevel);
+            dto.setCreatedAtMillis(entity.createdAtMillis);
+
+            result.add(dto);
+        }
+
+        return result;
+    }
+
+    public void syncPendingSessions() {
+        sessionRepository.syncPendingSessions(() -> {
+            if (currentSubjectId != null) {
+                refreshSessions(currentSubjectId);
             }
         });
     }
@@ -146,18 +196,16 @@ public class SessionViewModel extends AndroidViewModel {
         currentList.add(0, session);
 
         sessionsCache.put(subjectId, currentList);
-        loadedSubjectIds.add(subjectId);
 
         if (subjectId.equals(currentSubjectId)) {
-            sessionsLiveData.setValue(currentList);
+            sessionsLiveData.postValue(currentList);
         }
     }
 
     public void clearCache() {
         sessionsCache.clear();
-        loadedSubjectIds.clear();
         loadingSubjectIds.clear();
-        sessionsLiveData.setValue(new ArrayList<>());
+        sessionsLiveData.postValue(new ArrayList<>());
     }
 
     public void clearCacheForSubject(Long subjectId) {
@@ -166,7 +214,6 @@ public class SessionViewModel extends AndroidViewModel {
         }
 
         sessionsCache.remove(subjectId);
-        loadedSubjectIds.remove(subjectId);
         loadingSubjectIds.remove(subjectId);
     }
 }

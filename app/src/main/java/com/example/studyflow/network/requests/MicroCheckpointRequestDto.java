@@ -1,24 +1,22 @@
-package com.example.studyflow.models;
+package com.example.studyflow.network.requests;
 
-import java.io.Serializable;
-
-public class MicroCheckpoint implements Serializable {
+public class MicroCheckpointRequestDto {
 
     private String distractionCountRange;
     private String mood;
     private String breakReason;
-    private int concentrationLevel;
-    private long createdAtMillis;
+    private Integer concentrationLevel;
+    private Long createdAtMillis;
 
-    public MicroCheckpoint() {
+    public MicroCheckpointRequestDto() {
     }
 
-    public MicroCheckpoint(
+    public MicroCheckpointRequestDto(
             String distractionCountRange,
             String mood,
             String breakReason,
-            int concentrationLevel,
-            long createdAtMillis
+            Integer concentrationLevel,
+            Long createdAtMillis
     ) {
         this.distractionCountRange = distractionCountRange;
         this.mood = mood;
@@ -51,19 +49,19 @@ public class MicroCheckpoint implements Serializable {
         this.breakReason = breakReason;
     }
 
-    public int getConcentrationLevel() {
+    public Integer getConcentrationLevel() {
         return concentrationLevel;
     }
 
-    public void setConcentrationLevel(int concentrationLevel) {
+    public void setConcentrationLevel(Integer concentrationLevel) {
         this.concentrationLevel = concentrationLevel;
     }
 
-    public long getCreatedAtMillis() {
+    public Long getCreatedAtMillis() {
         return createdAtMillis;
     }
 
-    public void setCreatedAtMillis(long createdAtMillis) {
+    public void setCreatedAtMillis(Long createdAtMillis) {
         this.createdAtMillis = createdAtMillis;
     }
 }

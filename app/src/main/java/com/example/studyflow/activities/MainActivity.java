@@ -5,8 +5,6 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-import android.view.Menu;
-import android.view.MenuItem;
 
 import com.example.studyflow.R;
 import com.example.studyflow.fragments.CreateSubjectFragment;
@@ -16,44 +14,45 @@ import com.example.studyflow.fragments.StatisticsFragment;
 import com.example.studyflow.fragments.StudyFragment;
 import com.example.studyflow.fragments.SubjectDetailFragment;
 import com.example.studyflow.fragments.SubjectsFragment;
+import com.example.studyflow.models.MicroCheckpoint;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNavigationView;
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.settingsFragment) {
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragmentContainer, new SettingsFragment())
-                    .addToBackStack(null)
-                    .commit();
-
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
+    private MaterialToolbar topAppBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        topAppBar = findViewById(R.id.topAppBar);
         bottomNavigationView = findViewById(R.id.bottomNavigation);
+
+        setupTopAppBar();
+        setupBottomNavigation();
 
         if (savedInstanceState == null) {
             loadFragment(new SubjectsFragment(), false);
         }
+    }
 
+    private void setupTopAppBar() {
+        topAppBar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.settingsFragment) {
+                loadFragment(new SettingsFragment(), true);
+                return true;
+            }
+
+            return false;
+        });
+    }
+
+    private void setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
 
@@ -109,7 +108,9 @@ public class MainActivity extends AppCompatActivity {
     public void openResultFragment(Long subjectId,
                                    String subjectName,
                                    long studiedSeconds,
-                                   long plannedSeconds) {
+                                   long plannedSeconds,
+                                   ArrayList<MicroCheckpoint> microCheckpoints,
+                                   long sessionLocalId) {
         if (subjectId == null || subjectId <= 0) {
             return;
         }
@@ -121,6 +122,8 @@ public class MainActivity extends AppCompatActivity {
         bundle.putString("subjectName", subjectName);
         bundle.putLong("studiedSeconds", studiedSeconds);
         bundle.putLong("plannedSeconds", plannedSeconds);
+        bundle.putSerializable("microCheckpoints", microCheckpoints);
+        bundle.putLong("sessionLocalId", sessionLocalId);
 
         fragment.setArguments(bundle);
 

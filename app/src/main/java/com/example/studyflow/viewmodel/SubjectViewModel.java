@@ -9,8 +9,10 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.studyflow.network.responses.SubjectResponseDto;
 import com.example.studyflow.repository.SubjectRepository;
+import com.example.studyflow.storage.local.SubjectEntity;
 import com.example.studyflow.utils.AuthErrorHandler;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -25,6 +27,8 @@ public class SubjectViewModel extends AndroidViewModel {
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
     private final MutableLiveData<Boolean> subjectCreated = new MutableLiveData<>();
     private final MutableLiveData<Boolean> loading = new MutableLiveData<>(false);
+    private boolean isCreatingSubject = false;
+    private boolean isSyncingSubjects = false;
 
     private boolean isLoaded = false;
     private boolean isLoadingNow = false;
@@ -51,7 +55,7 @@ public class SubjectViewModel extends AndroidViewModel {
     }
 
     public void resetSubjectCreated() {
-        subjectCreated.setValue(false);
+        subjectCreated.postValue(false);
     }
 
     public void loadSubjectsIfNeeded() {
@@ -59,7 +63,7 @@ public class SubjectViewModel extends AndroidViewModel {
             return;
         }
 
-        loadSubjectsFromServer();
+        refreshSubjects();
     }
 
     public void refreshSubjects() {
@@ -67,14 +71,24 @@ public class SubjectViewModel extends AndroidViewModel {
             return;
         }
 
-        isLoaded = false;
-        loadSubjectsFromServer();
+        isLoadingNow = true;
+        loading.postValue(true);
+
+        loadLocalSubjectsThenServer();
+    }
+
+    private void loadLocalSubjectsThenServer() {
+        subjectRepository.getLocalSubjects(localSubjects -> {
+            List<SubjectResponseDto> localDtos = convertLocalSubjectsToDto(localSubjects);
+
+            subjects.postValue(localDtos);
+            isLoaded = true;
+
+            loadSubjectsFromServer();
+        });
     }
 
     private void loadSubjectsFromServer() {
-        isLoadingNow = true;
-        loading.setValue(true);
-
         subjectRepository.getSubjects().enqueue(new Callback<List<SubjectResponseDto>>() {
             @Override
             public void onResponse(
@@ -85,19 +99,24 @@ public class SubjectViewModel extends AndroidViewModel {
                 loading.setValue(false);
 
                 if (response.isSuccessful() && response.body() != null) {
-                    subjects.setValue(response.body());
-                    isLoaded = true;
+                    List<SubjectResponseDto> serverSubjects = response.body();
+
+                    subjectRepository.saveServerSubjectsToLocal(serverSubjects, () -> {
+                        subjectRepository.getLocalSubjects(localSubjects -> {
+                            List<SubjectResponseDto> localDtos = convertLocalSubjectsToDto(localSubjects);
+                            subjects.postValue(localDtos);
+                            isLoaded = true;
+                        });
+                    });
                     return;
                 }
-
-                isLoaded = false;
 
                 if (response.code() == 401 || response.code() == 403) {
                     AuthErrorHandler.handleUnauthorized(getApplication());
                     return;
                 }
 
-                errorMessage.setValue("Failed to load subjects: " + response.code());
+                errorMessage.setValue("Server unavailable. Local subjects are shown.");
             }
 
             @Override
@@ -107,47 +126,96 @@ public class SubjectViewModel extends AndroidViewModel {
             ) {
                 isLoadingNow = false;
                 loading.setValue(false);
-                isLoaded = false;
 
-                errorMessage.setValue("Network error: " + t.getMessage());
+                errorMessage.setValue("Offline mode. Local subjects are shown.");
             }
         });
     }
 
     public void createSubject(String title, String description) {
-        subjectCreated.setValue(false);
-        loading.setValue(true);
+        if (isCreatingSubject) {
+            return;
+        }
 
-        subjectRepository.createSubject(title, description).enqueue(new Callback<SubjectResponseDto>() {
-            @Override
-            public void onResponse(
-                    @NonNull Call<SubjectResponseDto> call,
-                    @NonNull Response<SubjectResponseDto> response
-            ) {
-                loading.setValue(false);
+        isCreatingSubject = true;
 
-                if (response.isSuccessful() && response.body() != null) {
-                    subjectCreated.setValue(true);
-                    refreshSubjects();
-                    return;
+        subjectCreated.postValue(false);
+        loading.postValue(true);
+
+        subjectRepository.createSubjectOfflineFirst(
+                title,
+                description,
+                new SubjectRepository.CreateSubjectCallback() {
+                    @Override
+                    public void onLocalSaved(SubjectEntity subject) {
+                        subjectCreated.postValue(true);
+
+                        subjectRepository.getLocalSubjects(localSubjects -> {
+                            List<SubjectResponseDto> localDtos = convertLocalSubjectsToDto(localSubjects);
+                            subjects.postValue(localDtos);
+                            isLoaded = true;
+                        });
+                    }
+
+                    @Override
+                    public void onSynced(SubjectEntity subject) {
+                        isCreatingSubject = false;
+                        loading.postValue(false);
+
+                        subjectRepository.getLocalSubjects(localSubjects -> {
+                            List<SubjectResponseDto> localDtos = convertLocalSubjectsToDto(localSubjects);
+                            subjects.postValue(localDtos);
+                            isLoaded = true;
+                        });
+                    }
+
+                    @Override
+                    public void onSyncFailed(SubjectEntity subject) {
+                        isCreatingSubject = false;
+                        loading.postValue(false);
+                        errorMessage.postValue("Subject saved locally. It will sync later.");
+                    }
                 }
+        );
+    }
 
-                if (response.code() == 401 || response.code() == 403) {
-                    AuthErrorHandler.handleUnauthorized(getApplication());
-                    return;
-                }
+    private List<SubjectResponseDto> convertLocalSubjectsToDto(List<SubjectEntity> localSubjects) {
+        List<SubjectResponseDto> result = new ArrayList<>();
 
-                errorMessage.setValue("Failed to create subject: " + response.code());
+        if (localSubjects == null) {
+            return result;
+        }
+
+        for (SubjectEntity entity : localSubjects) {
+            SubjectResponseDto dto = new SubjectResponseDto();
+
+            if (entity.serverId != null) {
+                dto.setId(entity.serverId);
+            } else {
+                dto.setId(-entity.localId);
             }
 
-            @Override
-            public void onFailure(
-                    @NonNull Call<SubjectResponseDto> call,
-                    @NonNull Throwable t
-            ) {
-                loading.setValue(false);
-                errorMessage.setValue("Network error: " + t.getMessage());
-            }
+            dto.setTitle(entity.title);
+            dto.setDescription(entity.description);
+
+            result.add(dto);
+        }
+
+        return result;
+    }
+
+    public void syncSubjects() {
+        if (isSyncingSubjects) {
+            return;
+        }
+
+        isSyncingSubjects = true;
+        loading.postValue(true);
+
+        subjectRepository.syncPendingSubjects(() -> {
+            isSyncingSubjects = false;
+            loading.postValue(false);
+            refreshSubjects();
         });
     }
 }

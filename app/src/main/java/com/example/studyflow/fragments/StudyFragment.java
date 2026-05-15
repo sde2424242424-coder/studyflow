@@ -11,12 +11,17 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.studyflow.R;
 import com.example.studyflow.activities.MainActivity;
+import com.example.studyflow.models.MicroCheckpoint;
 import com.example.studyflow.utils.CircleTimerView;
 import com.example.studyflow.utils.DialogUtils;
+import com.example.studyflow.viewmodel.StudyViewModel;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class StudyFragment extends Fragment {
@@ -41,9 +46,9 @@ public class StudyFragment extends Fragment {
 
     private Button buttonPause;
     private Button buttonFinish;
-
-    private int focusLevel = 3;
-    private int fatigueLevel = 3;
+    private StudyViewModel studyViewModel;
+    private long currentSessionLocalId = -1L;
+    private final List<MicroCheckpoint> microCheckpoints = new ArrayList<>();
 
     private final Runnable timerRunnable = new Runnable() {
         @Override
@@ -81,6 +86,14 @@ public class StudyFragment extends Fragment {
 
         readArguments();
 
+        studyViewModel = new ViewModelProvider(requireActivity()).get(StudyViewModel.class);
+
+        studyViewModel.getCurrentSessionLocalId().observe(getViewLifecycleOwner(), sessionLocalId -> {
+            if (sessionLocalId != null) {
+                currentSessionLocalId = sessionLocalId;
+            }
+        });
+
         if (subjectId <= 0) {
             Toast.makeText(requireContext(), "Ошибка: subjectId не передан", Toast.LENGTH_SHORT).show();
             ((MainActivity) requireActivity()).returnToSubjects();
@@ -103,25 +116,26 @@ public class StudyFragment extends Fragment {
             if (isRunning) {
                 pauseTimer();
 
-                DialogUtils.showPauseDialog(
-                        requireContext(),
-                        focusLevel,
-                        fatigueLevel,
-                        new DialogUtils.PauseDialogListener() {
-                            @Override
-                            public void onResume(int focus, int fatigue) {
-                                focusLevel = focus;
-                                fatigueLevel = fatigue;
-                                resumeTimer();
-                            }
+                DialogUtils.showPauseSurveyDialog(requireContext(), checkpoint -> {
+                    microCheckpoints.add(checkpoint);
 
-                            @Override
-                            public void onKeepPaused(int focus, int fatigue) {
-                                focusLevel = focus;
-                                fatigueLevel = fatigue;
-                            }
-                        }
-                );
+                    if (currentSessionLocalId > 0) {
+                        studyViewModel.saveMicroCheckpoint(
+                                currentSessionLocalId,
+                                checkpoint.getDistractionCountRange(),
+                                checkpoint.getMood(),
+                                checkpoint.getBreakReason(),
+                                checkpoint.getConcentrationLevel()
+                        );
+                    }
+
+                    Toast.makeText(
+                            requireContext(),
+                            "Опрос сохранён",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                });
+
             } else {
                 resumeTimer();
             }
@@ -129,6 +143,7 @@ public class StudyFragment extends Fragment {
 
         buttonFinish.setOnClickListener(v -> finishStudySession());
 
+        studyViewModel.startSession(subjectId, "DEFAULT");
         startTimer();
     }
 
@@ -148,6 +163,8 @@ public class StudyFragment extends Fragment {
         isTimerStarted = true;
         isRunning = true;
         sessionStartTimeMillis = System.currentTimeMillis();
+
+        buttonPause.setText("Pause");
 
         handler.post(timerRunnable);
     }
@@ -231,7 +248,9 @@ public class StudyFragment extends Fragment {
                 subjectId,
                 subjectName,
                 studiedSeconds,
-                totalSeconds
+                totalSeconds,
+                new ArrayList<>(microCheckpoints),
+                currentSessionLocalId
         );
     }
 

@@ -12,6 +12,7 @@ import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
@@ -35,4 +36,7 @@ public interface ApiService {
 
     @POST("/api/sessions")
     Call<SessionResponseDto> finishSession(@Body FinishSessionRequestDto request);
+
+    @DELETE("/api/subjects/{subjectId}")
+    Call<Void> deleteSubject(@Path("subjectId") Long subjectId);
 }

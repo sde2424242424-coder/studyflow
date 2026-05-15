@@ -1,15 +1,83 @@
+# =========================
+# Android Studio / IntelliJ
+# =========================
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+*.iws
+*.ipr
+out/
+
+# =========================
+# Gradle
+# =========================
+.gradle/
+build/
+*/build/
+
+# =========================
+# Local machine config
+# =========================
 local.properties
+
+# =========================
+# Android generated files
+# =========================
+captures/
+.externalNativeBuild/
+.cxx/
+
+# =========================
+# Build outputs
+# =========================
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# =========================
+# Java / Kotlin generated
+# =========================
+*.class
+
+# =========================
+# Logs / temporary files
+# =========================
+*.log
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
+
+# =========================
+# Keystore / signing keys
+# =========================
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+*.crt
+
+# =========================
+# Environment files
+# =========================
+.env
+.env.*
+
+# =========================
+# Local database files
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# Google / Firebase
+# =========================
+google-services.json
+
+# =========================
+# Navigation / IDE generated
+# =========================
+.navigation/

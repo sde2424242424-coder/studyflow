@@ -19,6 +19,7 @@ import com.example.studyflow.R;
 import com.example.studyflow.activities.MainActivity;
 import com.example.studyflow.adapters.SessionAdapter;
 import com.example.studyflow.network.responses.SessionResponseDto;
+import com.example.studyflow.repository.SubjectRepository;
 import com.example.studyflow.viewmodel.SessionViewModel;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ public class SubjectDetailFragment extends Fragment {
 
     private TextView textSubjectTitle;
     private Button buttonStartStudy;
+    private Button buttonDeleteSubject;
 
     private long subjectId = -1L;
     private String subjectName;
@@ -37,6 +39,7 @@ public class SubjectDetailFragment extends Fragment {
     private final List<SessionResponseDto> sessionList = new ArrayList<>();
 
     private SessionViewModel sessionViewModel;
+    private SubjectRepository subjectRepository;
 
     public SubjectDetailFragment() {
         super(R.layout.fragment_subject_detail);
@@ -48,11 +51,14 @@ public class SubjectDetailFragment extends Fragment {
 
         textSubjectTitle = view.findViewById(R.id.textSubjectTitle);
         buttonStartStudy = view.findViewById(R.id.buttonStartStudy);
+        buttonDeleteSubject = view.findViewById(R.id.buttonDeleteSubject);
         recyclerSessionHistory = view.findViewById(R.id.recyclerSessionHistory);
+
+        subjectRepository = new SubjectRepository(requireContext());
 
         readArguments();
 
-        if (subjectId <= 0) {
+        if (subjectId == -1L) {
             Toast.makeText(requireContext(), "Ошибка: subjectId не передан", Toast.LENGTH_SHORT).show();
             ((MainActivity) requireActivity()).returnToSubjects();
             return;
@@ -66,9 +72,23 @@ public class SubjectDetailFragment extends Fragment {
 
         observeViewModel();
 
-        sessionViewModel.loadSessionsIfNeeded(subjectId);
+        if (subjectId > 0) {
+            sessionViewModel.loadSessionsIfNeeded(subjectId);
+        } else {
+            long localSubjectId = Math.abs(subjectId);
+
+            Toast.makeText(
+                    requireContext(),
+                    "Локальный предмет. Сессии будут доступны после локальной реализации.",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            sessionAdapter.setSessions(new ArrayList<>());
+        }
 
         buttonStartStudy.setOnClickListener(v -> showHoursDialog());
+
+        buttonDeleteSubject.setOnClickListener(v -> showDeleteSubjectDialog());
     }
 
     private void readArguments() {
@@ -98,6 +118,86 @@ public class SubjectDetailFragment extends Fragment {
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void showDeleteSubjectDialog() {
+        String title = subjectName != null ? subjectName : "этот урок";
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Удалить урок?")
+                .setMessage("Урок \"" + title + "\" будет удалён. Это действие нельзя отменить.")
+                .setPositiveButton("Удалить", (dialog, which) -> deleteSubject())
+                .setNegativeButton("Отмена", null)
+                .show();
+    }
+
+    private void deleteSubject() {
+        if (subjectId == -1L || subjectId == 0L) {
+            Toast.makeText(requireContext(), "Ошибка: subjectId = " + subjectId, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        buttonDeleteSubject.setEnabled(false);
+
+        if (subjectId > 0) {
+            subjectRepository.deleteSubject(subjectId, new SubjectRepository.DeleteSubjectCallback() {
+                @Override
+                public void onSuccess() {
+                    if (!isAdded()) return;
+
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(requireContext(), "Урок удалён", Toast.LENGTH_SHORT).show();
+                        ((MainActivity) requireActivity()).returnToSubjects();
+                    });
+                }
+
+                @Override
+                public void onError(String message) {
+                    if (!isAdded()) return;
+
+                    requireActivity().runOnUiThread(() -> {
+                        buttonDeleteSubject.setEnabled(true);
+                        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                    });
+                }
+            });
+        } else {
+            long localId = Math.abs(subjectId);
+
+            subjectRepository.getLocalSubjectById(localId, subject -> {
+                if (subject == null) {
+                    if (!isAdded()) return;
+
+                    requireActivity().runOnUiThread(() -> {
+                        buttonDeleteSubject.setEnabled(true);
+                        Toast.makeText(requireContext(), "Локальный урок не найден", Toast.LENGTH_SHORT).show();
+                    });
+                    return;
+                }
+
+                subjectRepository.deleteSubjectOfflineFirst(subject, new SubjectRepository.DeleteSubjectCallback() {
+                    @Override
+                    public void onSuccess() {
+                        if (!isAdded()) return;
+
+                        requireActivity().runOnUiThread(() -> {
+                            Toast.makeText(requireContext(), "Урок удалён", Toast.LENGTH_SHORT).show();
+                            ((MainActivity) requireActivity()).returnToSubjects();
+                        });
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        if (!isAdded()) return;
+
+                        requireActivity().runOnUiThread(() -> {
+                            buttonDeleteSubject.setEnabled(true);
+                            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                });
+            });
+        }
     }
 
     private void showHoursDialog() {
@@ -165,7 +265,7 @@ public class SubjectDetailFragment extends Fragment {
     }
 
     private void openStudyFragment(long plannedSeconds) {
-        if (subjectId <= 0) {
+        if (subjectId == -1L || subjectId == 0L) {
             Toast.makeText(requireContext(), "Ошибка: subjectId = " + subjectId, Toast.LENGTH_SHORT).show();
             return;
         }

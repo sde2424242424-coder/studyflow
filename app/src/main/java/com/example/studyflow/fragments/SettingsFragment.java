@@ -1,9 +1,11 @@
 package com.example.studyflow.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
@@ -12,7 +14,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.studyflow.R;
+import com.example.studyflow.activities.AuthActivity;
 import com.example.studyflow.storage.AppSettingsManager;
+import com.example.studyflow.storage.SessionManager;
 
 public class SettingsFragment extends Fragment {
 
@@ -22,6 +26,7 @@ public class SettingsFragment extends Fragment {
     private RadioButton englishRadioButton;
     private RadioButton russianRadioButton;
     private RadioButton koreanRadioButton;
+    private Button logoutButton;
 
     public SettingsFragment() {
         // Required empty public constructor
@@ -49,9 +54,11 @@ public class SettingsFragment extends Fragment {
         englishRadioButton = view.findViewById(R.id.englishRadioButton);
         russianRadioButton = view.findViewById(R.id.russianRadioButton);
         koreanRadioButton = view.findViewById(R.id.koreanRadioButton);
+        logoutButton = view.findViewById(R.id.logoutButton);
 
         setupCurrentLanguage();
         setupLanguageListener();
+        setupLogoutButton();
     }
 
     private void setupCurrentLanguage() {
@@ -88,6 +95,19 @@ public class SettingsFragment extends Fragment {
             appSettingsManager.saveLanguage(selectedLanguage);
 
             requireActivity().recreate();
+        });
+    }
+
+    private void setupLogoutButton() {
+        logoutButton.setOnClickListener(v -> {
+            SessionManager sessionManager = new SessionManager(requireContext());
+            sessionManager.clearSession();
+
+            Intent intent = new Intent(requireContext(), AuthActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+
+            requireActivity().finish();
         });
     }
 }

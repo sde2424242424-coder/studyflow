@@ -32,6 +32,8 @@ public class SubjectsFragment extends Fragment {
     private SubjectAdapter adapter;
     private SubjectViewModel viewModel;
 
+    //private boolean firstLoadDone = false;
+
     public SubjectsFragment() {
         super(R.layout.fragment_subjects);
     }
@@ -53,7 +55,18 @@ public class SubjectsFragment extends Fragment {
         setupClickListeners();
         observeViewModel();
 
-        viewModel.refreshSubjects();
+        viewModel.loadSubjectsIfNeeded();
+        viewModel.syncSubjects();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        /*if (viewModel != null && firstLoadDone) {
+            viewModel.refreshSubjects();
+            viewModel.syncSubjects();
+        }*/
     }
 
     private void setupRecyclerView() {
@@ -63,13 +76,15 @@ public class SubjectsFragment extends Fragment {
                 return;
             }
 
-            if (subject.getId() == null || subject.getId() <= 0) {
-                Toast.makeText(requireContext(), "Subject id is invalid", Toast.LENGTH_SHORT).show();
+            Long subjectId = subject.getId();
+
+            if (subjectId == null) {
+                Toast.makeText(requireContext(), "Subject id is missing", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             ((MainActivity) requireActivity()).openSubjectDetail(
-                    subject.getId(),
+                    subjectId,
                     subject.getTitle()
             );
         });
@@ -84,6 +99,7 @@ public class SubjectsFragment extends Fragment {
         });
 
         swipeRefreshSubjects.setOnRefreshListener(() -> {
+            viewModel.syncSubjects();
             viewModel.refreshSubjects();
         });
     }

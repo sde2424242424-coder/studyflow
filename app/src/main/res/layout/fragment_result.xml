@@ -1,52 +1,601 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:background="#F8F6FF"
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/textTimeValue"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="00:00:00"
-        android:textSize="20sp"/>
-
-    <TextView
-        android:id="@+id/textProductivityValue"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Productivity: 1 / 5"/>
-
-    <SeekBar
-        android:id="@+id/seekBarProductivity"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:max="4"/>
+        android:orientation="vertical"
+        android:padding="20dp">
 
-    <TextView
-        android:id="@+id/textFatigueValue"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Fatigue: 1 / 5"/>
+        <TextView
+            android:id="@+id/textSessionReviewTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Session Review"
+            android:textColor="#2D2447"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="8dp" />
 
-    <SeekBar
-        android:id="@+id/seekBarFatigue"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:max="4"/>
+        <TextView
+            android:id="@+id/textSessionReviewSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="How was your study session?"
+            android:textColor="#7D7397"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
 
-    <EditText
-        android:id="@+id/editNotes"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Notes"/>
+        <ProgressBar
+            android:id="@+id/sessionReviewProgressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:max="2"
+            android:progress="1"
+            android:progressTint="#8B6DFF"
+            android:progressBackgroundTint="#E5DFFF"
+            android:layout_marginBottom="20dp" />
 
-    <Button
-        android:id="@+id/buttonSaveResult"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Save Result"/>
+        <LinearLayout
+            android:id="@+id/sessionReviewStepOneLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-</LinearLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Где обучался?"
+                android:textColor="#2D2447"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupStudyPlace"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleSelection="true"
+                app:selectionRequired="false"
+                android:layout_marginBottom="18dp">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipHome"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🏠 Дом"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCafe"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="☕ Кофейня"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipLibrary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📚 Библиотека"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipUniversity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🏫 Университет"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+            </com.google.android.material.chip.ChipGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Какой был фон?"
+                android:textColor="#2D2447"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupStudyEnvironment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleSelection="true"
+                app:selectionRequired="false"
+                android:layout_marginBottom="18dp">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSilence"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔇 Тишина"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipMusic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎵 Музыка"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipVideo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎬 Видео"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipNoise"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔊 Шумное место"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+            </com.google.android.material.chip.ChipGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Что помогло?"
+                android:textColor="#2D2447"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupHelpfulFactors"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleSelection="false"
+                android:layout_marginBottom="18dp">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipHelpSilence"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔇 Тишина"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipHelpMusic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎵 Музыка"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipHelpCoffee"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="☕ Кофе"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipHelpNotes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📝 Конспект"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipHelpPractice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💻 Практика"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipHelpDeadline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⏰ Дедлайн"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+            </com.google.android.material.chip.ChipGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Что помешало?"
+                android:textColor="#2D2447"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupDisturbingFactors"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleSelection="false"
+                android:layout_marginBottom="24dp">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipDisturbNothing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✅ Ничего"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipDisturbPhone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📱 Телефон"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipDisturbNoise"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔊 Шум"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipDisturbTired"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="😴 Усталость"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipDisturbHardTopic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🧩 Сложная тема"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+            </com.google.android.material.chip.ChipGroup>
+
+            <Button
+                android:id="@+id/buttonSessionReviewNext"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Next"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#8B6DFF" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/sessionReviewStepTwoLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Насколько продуктивно?"
+                android:textColor="#2D2447"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <RatingBar
+                android:id="@+id/ratingProductivity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:numStars="5"
+                android:stepSize="1"
+                android:rating="3"
+                android:layout_marginBottom="18dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Насколько было сложно?"
+                android:textColor="#2D2447"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupDifficulty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleSelection="true"
+                app:selectionRequired="false"
+                android:layout_marginBottom="18dp">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipEasy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🙂 Легко"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="😐 Средне"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipHard"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="😣 Трудно"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+            </com.google.android.material.chip.ChipGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Нужно ли повторить тему?"
+                android:textColor="#2D2447"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="18dp">
+
+                <Button
+                    android:id="@+id/buttonNeedReviewYes"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:text="🔁 Да"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#8B6DFF"
+                    android:layout_marginEnd="6dp" />
+
+                <Button
+                    android:id="@+id/buttonNeedReviewNo"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:text="✅ Нет"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#8B6DFF"
+                    android:layout_marginStart="6dp" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Насколько устал?"
+                android:textColor="#2D2447"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupFatigue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleSelection="true"
+                app:selectionRequired="false"
+                android:layout_marginBottom="18dp">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipNotTired"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="😊 Не устал"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipNormalTired"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="😐 Средне"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipVeryTired"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="😴 Устал"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+            </com.google.android.material.chip.ChipGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Насколько понял материал?"
+                android:textColor="#2D2447"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupUnderstanding"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleSelection="true"
+                app:selectionRequired="false"
+                android:layout_marginBottom="24dp">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipUnderstoodWell"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="😊 Хорошо понял"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipUnderstoodPartly"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🟡 Понял частично"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipDidNotUnderstand"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="❌ Не понял"
+                    app:chipBackgroundColor="#FFFFFF"
+                    app:chipStrokeColor="#DCD3FF"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:checkable="true" />
+
+            </com.google.android.material.chip.ChipGroup>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/buttonSessionReviewBack"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:text="Back"
+                    android:textAllCaps="false"
+                    android:textColor="#8B6DFF"
+                    android:backgroundTint="#FFFFFF"
+                    android:layout_marginEnd="6dp" />
+
+                <Button
+                    android:id="@+id/buttonSaveSessionReview"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:text="Save"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#8B6DFF"
+                    android:layout_marginStart="6dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>
